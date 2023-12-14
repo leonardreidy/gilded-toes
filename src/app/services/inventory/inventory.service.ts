@@ -1,7 +1,12 @@
-import { Item } from "@/components/item.component";
-import { InventoryRulesEngine } from "@/components/rules.engine.component";
-import { CoreResultType, CoreRuleType } from "@/core/core.rules.engine";
-import { baseRules as defaultRules } from "@/services/inventory/base.rules";
+import { Item, ItemType } from "@/components/item.component";
+import { ServiceLogger } from "@/components/logger.component";
+import { LogType } from "@/core/core.logger";
+
+export enum ServiceDefaults {
+  DefaultQualityDecayValue = 1,
+  DefaultQualityIncreaseValue = 1,
+  DefaultSellinIncreaseValue = 1,
+}
 
 export interface InventoryServiceITF {
   updateQuality(items): Array<Item>;
@@ -12,39 +17,68 @@ export interface InventoryServiceITF {
  * @description Receives requests for actions on inventory items and coordinates services and resources
  * to fulfill those requests
  * @class InventoryService
- * @param rulesEngine: InventoryRulesEngine<Rule, Result>
- * @param baseRules?: any
+ * @param serviceLogger ServiceLogger takes ServiceLogger as a constructor parameter
  */
-export class InventoryService<Rule extends CoreRuleType, Result extends CoreResultType> implements InventoryServiceITF {
-  private _rulesEngine: InventoryRulesEngine<Rule, Result>;
+export class InventoryService implements InventoryServiceITF {
+  private _name: string;
 
-  constructor(rulesEngine: InventoryRulesEngine<Rule, Result>, baseRules = defaultRules) {
-    this._rulesEngine = rulesEngine;
-    this.initialize({ baseRules });
+  constructor(private serviceLogger: ServiceLogger) {
+    this._name = InventoryService.name;
+    this.initialize({});
+  }
+
+  get name(): string {
+    return this._name;
   }
 
   public initialize(opts: any) {
-    this._rulesEngine.initialize(opts.baseRules);
-  }
-
-  public addRule(rule: Rule, result: Result) {
-    this._rulesEngine.add(rule, result);
-  }
-
-  // TODO - feature implementation for new item
-  public addItem(item: Item) {
+    this.serviceLogger.log(`${this.name} is initializing`, LogType.INFO);
   }
 
   public updateQuality(items: Array<Item>): Array<Item> {
     return this.updateQualityDeprecated(items);
   }
 
+  /**
+   * “Conjured” items degrade in Quality twice as fast as normal items
+   */
+  private updateConjuredItems(items: Array<Item>): Array<Item> {
+    items?.map((item: Item) => {
+      if(this.isAConjuredItem(item)) {
+        return this.decreaseItemQualityByTwiceTheDefault(item, ServiceDefaults.DefaultQualityDecayValue);
+      }
+    });
+    return items;
+  }
+
+  // Check for new Conjured type item: ItemType.Conjured
+  private isAConjuredItem(item: Item): Item {
+    item.type === ItemType.Conjured;
+    return item;
+  }
+
+  // New rule for new Conjured type item (ItemType.Conjured)
+  private decreaseItemQualityByTwiceTheDefault(item: Item, defaultQualityValue: number): Item {
+    this.serviceLogger.log(String(item.quality), LogType.INFO);
+    if (item.quality === 0) {
+      return item;
+    }
+    if (item.quality - (2 * defaultQualityValue ?? 2) < 0) {
+      item.quality = 0;
+    };
+    return item;
+  }
+
   // TODO - add conditions for new item
   private updateQualityDeprecated(items: Array<Item>): Array<Item> {
+
     // loop through items
     for (let i = 0; i < items.length; i++) {
-      // if item is not Aged Brie and item is not Backstage passes
-      if (items[i].name != 'Aged Brie' && items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
+      
+      // if item is not Aged Brie and item is not Backstage passes and item is not a Conjured item
+      if (items[i].name != 'Aged Brie' && 
+        items[i].name != 'Backstage passes to a TAFKAL80ETC concert' &&
+        !this.isAConjuredItem(items[i])) {
         // if item quality is greater than 0
         if (items[i].quality > 0) {
           // if item is not Sulfuras
@@ -86,8 +120,8 @@ export class InventoryService<Rule extends CoreRuleType, Result extends CoreResu
         items[i].sellIn = items[i].sellIn - 1;
       }
       
-      // if item sellIn is less than 0
-      if (items[i].sellIn < 0) {
+      // if item sellIn is less than 0 and item is not a Conjured item
+      if (items[i].sellIn < 0 && !this.isAConjuredItem(items[i])) {
         // if item is not Aged Brie
         if (items[i].name != 'Aged Brie') {
           // if item is not Backstage passes
@@ -102,7 +136,9 @@ export class InventoryService<Rule extends CoreRuleType, Result extends CoreResu
             }
           } else {
             // substract the item's quality from itself 
-            items[i].quality = items[i].quality - items[i].quality
+            if (!this.isAConjuredItem(items[i])) {
+              items[i].quality = items[i].quality - items[i].quality
+            }
           }
         } else {
           // if item quality is less than 50
@@ -111,6 +147,9 @@ export class InventoryService<Rule extends CoreRuleType, Result extends CoreResu
             items[i].quality = items[i].quality + 1
           }
         }
+      }
+      if(this.isAConjuredItem(items[i])) {
+        this.decreaseItemQualityByTwiceTheDefault(items[i], ServiceDefaults.DefaultQualityDecayValue)
       }
     }
     
@@ -132,7 +171,7 @@ export class InventoryService<Rule extends CoreRuleType, Result extends CoreResu
       if(this.itemIsNotAgedBrie(item) && this.itemIsNotBackstagePasses(item)) {
         if(this.itemQualityIsGreaterThanZero(item)) {
           if (this.itemIsNotSulfuras(item)) {
-            this.decreaseItemQualityByOne(item)
+            this.decreaseItemQualityByDefaultDecayValue(item, ServiceDefaults.DefaultQualityDecayValue)
           }
         }
       }
@@ -142,19 +181,19 @@ export class InventoryService<Rule extends CoreRuleType, Result extends CoreResu
         if(!this.itemIsNotBackstagePasses(item)) {
           if(this.itemSellInIsLessThanEleven(item)) {
             if (this.itemQualityIsLessThanFifty(item)) {
-              this.increaseItemQualityByOne(item);
+              this.increaseItemQualityByDefault(item, ServiceDefaults.DefaultQualityIncreaseValue);
             }
           }
           if(this.itemSellInIsLessThanSix(item)) {
             if(this.itemQualityIsLessThanFifty(item)) {
-              this.increaseItemQualityByOne(item);
+              this.increaseItemQualityByDefault(item, ServiceDefaults.DefaultQualityIncreaseValue);
             }
           }
         }
       }
 
       if (this.itemIsNotSulfuras(item)) {
-        this.increaseItemSellInByOne(item)
+        this.increaseItemSellInByDefaultValue(item, ServiceDefaults.DefaultSellinIncreaseValue)
       }
 
       if(this.itemSellInIsLessThanZero(item)) {
@@ -162,7 +201,7 @@ export class InventoryService<Rule extends CoreRuleType, Result extends CoreResu
           if(this.itemIsNotBackstagePasses(item)) {
             if(this.itemQualityIsGreaterThanZero(item)) {
               if (this.itemIsNotSulfuras(item)) {
-                this.decreaseItemQualityByOne
+                this.decreaseItemQualityByDefaultDecayValue(item, ServiceDefaults.DefaultQualityDecayValue)
               }
             }
           } 
@@ -172,7 +211,7 @@ export class InventoryService<Rule extends CoreRuleType, Result extends CoreResu
         }
         if(!this.itemIsNotAgedBrie(item)) {
           if (this.itemQualityIsLessThanFifty(item)) {
-            this.increaseItemQualityByOne(item)
+            this.increaseItemQualityByDefault(item, ServiceDefaults.DefaultQualityIncreaseValue)
           }
         }
       }
@@ -181,53 +220,59 @@ export class InventoryService<Rule extends CoreRuleType, Result extends CoreResu
     return updates as unknown as Array<Item>;
   }
 
+
   /** Update Actions */
-  private decreaseItemQualityByItsCurrentValue(item) {
-    item.quality = item.quality - item.quality;
+
+  private decreaseItemQualityByItsCurrentValue(item, currentValue?: number): Item {
+    item.quality = item.quality - (currentValue ?? item.quality);
+    return item;
   }
 
-  private increaseItemQualityByOne(item) {
-    item.quality = item.quality + 1;
+  private increaseItemQualityByDefault(item, defaultQualityIncreaseValue): Item {
+    item.quality = item.quality + (defaultQualityIncreaseValue ?? 1);
+    return item;
   }
 
-  private decreaseItemQualityByOne(item) {
-    item.quality = item.quality - 1;
+  private decreaseItemQualityByDefaultDecayValue(item, defaultQualityDecayValue): Item {
+    item.quality = item.quality - (defaultQualityDecayValue ?? 1);
+    return item;
   }
 
-  private increaseItemSellInByOne(item) {
-    item.sellIn = item.sellIn + 1;
+  private increaseItemSellInByDefaultValue(item, defaultSellInIncreaseValue): Item {
+    item.sellIn = item.sellIn + (defaultSellInIncreaseValue ?? 1);
+    return item;
   }
 
   /** Conditions */
-  private itemIsNotAgedBrie(item) {
+  private itemIsNotAgedBrie(item): boolean {
     return item.name != 'Aged Brie';
   }
 
-  private itemIsNotBackstagePasses(item) {
+  private itemIsNotBackstagePasses(item): boolean {
     return item.name != 'Backstage passes to a TAFKAL80ETC concert';
   }
 
-  private itemQualityIsGreaterThanZero(item) {
+  private itemQualityIsGreaterThanZero(item): boolean {
     return item.quality > 0;
   }
 
-  private itemIsNotSulfuras(item) {
+  private itemIsNotSulfuras(item): boolean {
     return item.name != 'Sulfuras, Hand of Ragnaros';
   }
 
-  private itemQualityIsLessThanFifty(item) {
+  private itemQualityIsLessThanFifty(item): boolean {
     return item.quality < 50;
   }
 
-  private itemSellInIsLessThanEleven(item) {
+  private itemSellInIsLessThanEleven(item): boolean {
     return item.sellIn < 11;
   }
 
-  private itemSellInIsLessThanSix(item) {
+  private itemSellInIsLessThanSix(item): boolean {
     return item.sellIn < 6;
   }
 
-  private itemSellInIsLessThanZero(item) {
+  private itemSellInIsLessThanZero(item): boolean {
     return item.sellIn < 0;
   }
 }
