@@ -1,12 +1,8 @@
-import { Item, GildedRose } from '@/gilded-rose';
+import { GildedRose } from '@/gilded-rose';
+import { Item } from '@/components/item.component'
+import { InventoryService } from '@/services/inventory/inventory.service';
 
 describe('Gilded Rose', () => {
-  it('should foo', () => {
-    const expectedName = 'foo';
-    const gildedRose = new GildedRose([new Item('foo', 0, 0)]);
-    const items = gildedRose.updateQuality();
-    expect(items[0].name).toBe(expectedName);
-  });
 
   it('should instantiate a new Item', () => {
     const expectedName = 'Tucker Butternugs';
@@ -36,7 +32,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 10;
     const expectedQuality = 14;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality - 1);
   });
@@ -46,7 +43,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 10;
     const expectedQuality = 14;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
     const items = gildedRose.updateQuality();
     expect(items[0].sellIn).toBe(expectedSellIn - 1);
   });
@@ -56,7 +54,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 0;
     const expectedQuality = 14;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality - 2);
   });
@@ -66,7 +65,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 0;
     const expectedQuality = 0;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality);
   });
@@ -76,7 +76,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 10;
     const expectedQuality = 14;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality + 1);
   });
@@ -86,7 +87,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 10;
     const expectedQuality = 50;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality);
   });
@@ -96,7 +98,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 10;
     const expectedQuality = 80;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality);
   });
@@ -106,7 +109,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 20;
     const expectedQuality = 14;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
 
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality + 1);
@@ -117,7 +121,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 10;
     const expectedQuality = 14;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
 
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality + 2);
@@ -128,7 +133,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 5;
     const expectedQuality = 14;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
 
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(expectedQuality + 3);
@@ -139,7 +145,8 @@ describe('Gilded Rose', () => {
     const expectedSellIn = 0;
     const expectedQuality = 14;
     const item = new Item(expectedName, expectedSellIn, expectedQuality);
-    const gildedRose = new GildedRose([item]);
+    const testItems = [item];
+    const gildedRose = new GildedRose(testItems);
 
     const items = gildedRose.updateQuality();
     expect(items[0].quality).toBe(0);
