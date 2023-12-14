@@ -1,26 +1,32 @@
 import { Item } from "./components/item.component";
-import { InventoryRulesEngine } from "./components/rules.engine.component";
-import { CoreResultType, CoreRuleType } from "./core/core.rules.engine";
+import { ServiceLogger } from "./components/logger.component";
 import { InventoryService } from "./services/inventory/inventory.service";
 
-export class GildedRose<Rule extends CoreRuleType, Result extends CoreResultType> {
+export class GildedRose {
+  private _name: string;
   private _items: Array<Item>;
-  private _inventoryService: InventoryService<Rule, Result>;
+  private _serviceLogger: ServiceLogger;
+  private _inventoryService: InventoryService;
 
   constructor(
     items: Array<Item>,
-    inventoryService?: InventoryService<Rule, Result>,
+    inventoryService?: InventoryService,
+    serviceLogger?: ServiceLogger,
   ) {
+    this._name = GildedRose.name;
+    this._serviceLogger = serviceLogger ?? new ServiceLogger();
+    this._inventoryService = inventoryService ?? new InventoryService(this._serviceLogger);
     this._items = items;
-    this._inventoryService = inventoryService ??
-      new InventoryService<Rule, Result>(new InventoryRulesEngine<Rule, Result>());
   }
 
+  get name(): string {
+    return this._name;
+  }
   get items(): Array<Item> {
     return this._items;
   }
 
-  get inventoryService(): InventoryService<Rule, Result> {
+  get inventoryService(): InventoryService {
     return this._inventoryService;
   }
 
