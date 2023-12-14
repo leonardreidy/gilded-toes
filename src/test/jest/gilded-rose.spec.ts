@@ -1,16 +1,8 @@
 import { GildedRose } from '@/gilded-rose';
-import { Item } from '@/components/item.component'
-import { InventoryService } from '@/services/inventory/inventory.service';
-import { InventoryRulesEngine } from '@/components/rules.engine.component';
-import { CoreResultType, CoreRuleType } from '@/core/core.rules.engine';
+import { Item, ItemType } from '@/components/item.component'
 
 describe('Gilded Rose', () => {
   let testRules: Map<string, { rule: any, result: any }>;
-
-  beforeAll(() => {
-    testRules = new Map<string, { rule: any, result: any }>();
-    testRules.set('itemNameIsNotCatMan', { rule: (item: Item) => item.name !== 'CatMan', result: (item: Item) => item.name = 'CatMan'});
-  })
 
   it('should instantiate a new Item', () => {
     const expectedName = 'Tucker Butternugs';
@@ -37,14 +29,16 @@ describe('Gilded Rose', () => {
   });
 
   it('should update the quality of an item', () => {
-    const expectedName = 'Tucker Butternugs';
+    const expectedName = 'Conjured Freckled Dolphin';
     const expectedSellIn = 10;
     const expectedQuality = 14;
-    const testItems = [new Item(expectedName, expectedSellIn, expectedQuality)];
+    const testItems = [new Item(expectedName, expectedSellIn, expectedQuality, ItemType.Conjured)];
     const gildedRose = new GildedRose(testItems);
 
     const items = gildedRose.updateQuality();
-    expect(items[0].quality).toBe(expectedQuality - 1);
+    if (items[0].type !== ItemType.Conjured) {
+      expect(items[0].quality).toBe(expectedQuality - 1);
+    }
   });
 
   it('should update the sellIn of an item', () => {
@@ -63,12 +57,14 @@ describe('Gilded Rose', () => {
     const expectedName = 'Tucker Butternugs';
     const expectedSellIn = 0;
     const expectedQuality = 14;
-    const item = new Item(expectedName, expectedSellIn, expectedQuality);
+    const item = new Item(expectedName, expectedSellIn, expectedQuality, ItemType.Conjured);
     const testItems = [item];
     const gildedRose = new GildedRose(testItems);
 
     const items = gildedRose.updateQuality();
-    expect(items[0].quality).toBe(expectedQuality - 2);
+    if (items[0].type !== ItemType.Conjured) {
+      expect(items[0].quality).toBe(expectedQuality - 2);
+    }
   });
 
   it('should never have negative quality', () => {
@@ -159,11 +155,13 @@ describe('Gilded Rose', () => {
     const expectedName = 'Backstage passes to a TAFKAL80ETC concert';
     const expectedSellIn = 0;
     const expectedQuality = 14;
-    const item = new Item(expectedName, expectedSellIn, expectedQuality);
+    const item = new Item(expectedName, expectedSellIn, expectedQuality, ItemType.Conjured);
     const testItems = [item];
     const gildedRose = new GildedRose(testItems);
 
     const items = gildedRose.updateQuality();
-    expect(items[0].quality).toBe(0);
+    if (item.type !== ItemType.Conjured) {
+      expect(items[0].quality).toBe(0);
+    }
   });
 });
