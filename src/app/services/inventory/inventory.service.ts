@@ -5,7 +5,7 @@ import { LogType } from "@/core/core.logger";
 export enum ServiceDefaults {
   DefaultQualityDecayValue = 1,
   DefaultQualityIncreaseValue = 1,
-  DefaultSellinIncreaseValue = 1,
+  DefaultSellInIncreaseValue = 1,
 }
 
 export interface InventoryServiceITF {
@@ -45,7 +45,7 @@ export class InventoryService implements InventoryServiceITF {
   private updateConjuredItems(items: Array<Item>): Array<Item> {
     items?.map((item: Item) => {
       if(this.isAConjuredItem(item)) {
-        return this.decreaseItemQualityByTwiceTheDefault(item, ServiceDefaults.DefaultQualityDecayValue);
+        return this.decreaseItemQualityByTwiceTheDefault(item);
       }
     });
     return items;
@@ -58,12 +58,12 @@ export class InventoryService implements InventoryServiceITF {
   }
 
   // New rule for new Conjured type item (ItemType.Conjured)
-  private decreaseItemQualityByTwiceTheDefault(item: Item, defaultQualityValue: number): Item {
+  private decreaseItemQualityByTwiceTheDefault(item: Item): Item {
     this.serviceLogger.log(String(item.quality), LogType.INFO);
     if (item.quality === 0) {
       return item;
     }
-    if (item.quality - (2 * defaultQualityValue ?? 2) < 0) {
+    if (item.quality - (2 * ServiceDefaults.DefaultQualityDecayValue) < 0) {
       item.quality = 0;
     };
     return item;
@@ -71,7 +71,7 @@ export class InventoryService implements InventoryServiceITF {
 
   // TODO - add conditions for new item
   private updateQualityDeprecated(items: Array<Item>): Array<Item> {
-
+    this.serviceLogger.log(`${this.name}::updateQualityDeprecated is currently updating items`, LogType.INFO);
     // loop through items
     for (let i = 0; i < items.length; i++) {
       
@@ -149,7 +149,7 @@ export class InventoryService implements InventoryServiceITF {
         }
       }
       if(this.isAConjuredItem(items[i])) {
-        this.decreaseItemQualityByTwiceTheDefault(items[i], ServiceDefaults.DefaultQualityDecayValue)
+        this.decreaseItemQualityByTwiceTheDefault(items[i])
       }
     }
     
@@ -171,7 +171,7 @@ export class InventoryService implements InventoryServiceITF {
       if(this.itemIsNotAgedBrie(item) && this.itemIsNotBackstagePasses(item)) {
         if(this.itemQualityIsGreaterThanZero(item)) {
           if (this.itemIsNotSulfuras(item)) {
-            this.decreaseItemQualityByDefaultDecayValue(item, ServiceDefaults.DefaultQualityDecayValue)
+            this.decreaseItemQualityByDefaultDecayValue(item)
           }
         }
       }
@@ -181,19 +181,19 @@ export class InventoryService implements InventoryServiceITF {
         if(!this.itemIsNotBackstagePasses(item)) {
           if(this.itemSellInIsLessThanEleven(item)) {
             if (this.itemQualityIsLessThanFifty(item)) {
-              this.increaseItemQualityByDefault(item, ServiceDefaults.DefaultQualityIncreaseValue);
+              this.increaseItemQualityByDefault(item);
             }
           }
           if(this.itemSellInIsLessThanSix(item)) {
             if(this.itemQualityIsLessThanFifty(item)) {
-              this.increaseItemQualityByDefault(item, ServiceDefaults.DefaultQualityIncreaseValue);
+              this.increaseItemQualityByDefault(item);
             }
           }
         }
       }
 
       if (this.itemIsNotSulfuras(item)) {
-        this.increaseItemSellInByDefaultValue(item, ServiceDefaults.DefaultSellinIncreaseValue)
+        this.increaseItemSellInByDefaultValue(item)
       }
 
       if(this.itemSellInIsLessThanZero(item)) {
@@ -201,7 +201,7 @@ export class InventoryService implements InventoryServiceITF {
           if(this.itemIsNotBackstagePasses(item)) {
             if(this.itemQualityIsGreaterThanZero(item)) {
               if (this.itemIsNotSulfuras(item)) {
-                this.decreaseItemQualityByDefaultDecayValue(item, ServiceDefaults.DefaultQualityDecayValue)
+                this.decreaseItemQualityByDefaultDecayValue(item)
               }
             }
           } 
@@ -211,7 +211,7 @@ export class InventoryService implements InventoryServiceITF {
         }
         if(!this.itemIsNotAgedBrie(item)) {
           if (this.itemQualityIsLessThanFifty(item)) {
-            this.increaseItemQualityByDefault(item, ServiceDefaults.DefaultQualityIncreaseValue)
+            this.increaseItemQualityByDefault(item)
           }
         }
       }
@@ -223,23 +223,23 @@ export class InventoryService implements InventoryServiceITF {
 
   /** Update Actions */
 
-  private decreaseItemQualityByItsCurrentValue(item, currentValue?: number): Item {
+  private decreaseItemQualityByItsCurrentValue(item: Item, currentValue?: number): Item {
     item.quality = item.quality - (currentValue ?? item.quality);
     return item;
   }
 
-  private increaseItemQualityByDefault(item, defaultQualityIncreaseValue): Item {
-    item.quality = item.quality + (defaultQualityIncreaseValue ?? 1);
+  private increaseItemQualityByDefault(item: Item, qualityIncreaseValue?: number): Item {
+    item.quality = item.quality + (qualityIncreaseValue ?? ServiceDefaults.DefaultQualityIncreaseValue);
     return item;
   }
 
-  private decreaseItemQualityByDefaultDecayValue(item, defaultQualityDecayValue): Item {
-    item.quality = item.quality - (defaultQualityDecayValue ?? 1);
+  private decreaseItemQualityByDefaultDecayValue(item, qualityDecayValue?: number): Item {
+    item.quality = item.quality - (qualityDecayValue ?? ServiceDefaults.DefaultQualityDecayValue);
     return item;
   }
 
-  private increaseItemSellInByDefaultValue(item, defaultSellInIncreaseValue): Item {
-    item.sellIn = item.sellIn + (defaultSellInIncreaseValue ?? 1);
+  private increaseItemSellInByDefaultValue(item, sellInIncreaseValue?: number): Item {
+    item.sellIn = item.sellIn + (sellInIncreaseValue ?? ServiceDefaults.DefaultSellInIncreaseValue);
     return item;
   }
 
